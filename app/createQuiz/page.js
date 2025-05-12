@@ -1,11 +1,10 @@
 "use client";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 import { toast, Toaster } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faSpinner } from "@fortawesome/free-solid-svg-icons";
-
 export default function CreateQuiz({ questionId, quizId, selectedQuestion }) {
   const searchParams = useSearchParams();
   const router = useRouter();
