@@ -1,11 +1,179 @@
+// "use client";
+// import React, { useEffect, useState } from "react";
+// import { useSearchParams, useRouter } from "next/navigation";
+// import { supabase } from "../lib/supabase";
+// import { toast, Toaster } from "react-hot-toast";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { faChevronDown, faSpinner } from "@fortawesome/free-solid-svg-icons";
+// export default function CreateQuiz({ questionId, quizId, selectedQuestion }) {
+//   const searchParams = useSearchParams();
+//   const router = useRouter();
+//   const [course, setCourse] = useState("");
+//   const [loading, setLoading] = useState(true);
+//   const [isEditing, setIsEditing] = useState(false);
+//   const [currentQuestionId, setCurrentQuestionId] = useState(null);
+//   const [quiz, setQuiz] = useState(null);
+//   const [selectedType, setSelectedType] = useState("");
+//   const [questionType, setQuestionType] = useState(
+//     selectedQuestion?.type || ""
+//   );
+
+//   useEffect(() => {
+//     if (selectedQuestion) {
+//       setQuestionType(selectedQuestion.type);
+//       setSelectedType(selectedQuestion.type);
+//     }
+//   }, [selectedQuestion]);
+
+//   const quizTypes = [
+//     "Multiple Choice",
+//     "True/False",
+//     "Fill in the Blank",
+//     "Matching",
+//     "Short Answer",
+//     "Essay",
+//   ];
+
+//   useEffect(() => {
+//     const type = searchParams.get("type");
+//     const courseName = searchParams.get("course");
+
+//     if (type) setQuestionType(decodeURIComponent(type));
+//     if (courseName) setCourse(decodeURIComponent(courseName));
+
+//     setLoading(false);
+//   }, [searchParams]);
+
+//   if (loading) {
+//     return (
+//       <div className="flex justify-center items-center h-screen">
+//         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF8474]"></div>
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="max-w-4xl mx-auto h-fit">
+//       <Toaster position="top-right" />
+//       <div className="text-center ">
+//         <h1 className="text-3xl font-bold text-[#583D72] mb-4">
+//           {selectedQuestion ? "Edit Question" : "Create New Question"}
+//         </h1>
+//       </div>
+
+//       <div className="relative w-98 mx-auto ">
+//         <select
+//           className="w-full  px-4 py-2.5 border-2 border-[#FFC996] rounded-xl text-[#583D72] font-medium 
+//                     focus:outline-none focus:ring-1 focus:ring-[#FF8474] appearance-none"
+//           value={selectedType}
+//           onChange={(e) => {
+//             setSelectedType(e.target.value);
+//             setQuestionType(e.target.value);
+//           }}
+//         >
+//           <option value="">-- Select Question Type --</option>
+//           {quizTypes.map((type) => (
+//             <option key={type} value={type}>
+//               {type}
+//             </option>
+//           ))}
+//         </select>
+//         <div className="absolute right-4 top-1/2 transform -translate-y-1/2 text-[#9F5F80]">
+//           <FontAwesomeIcon icon={faChevronDown} />
+//         </div>
+//       </div>
+
+//       <div className="p-4">
+//         {questionType === "Multiple Choice" && (
+//           <MultipleChoiceForm
+//             questionType={questionType}
+//             questionId={selectedQuestion?.id || null}
+//             quizId={quizId}
+//             selectedQuestion={selectedQuestion}
+//             setQuestionType={setQuestionType}
+//           />
+//         )}
+
+//         {questionType === "True/False" && (
+//           <TrueFalseForm
+//             questionType={questionType}
+//             questionId={selectedQuestion?.id || null}
+//             quizId={quizId}
+//             selectedQuestion={selectedQuestion}
+//             setQuestionType={setQuestionType}
+//           />
+//         )}
+
+//         {questionType === "Fill in the Blank" && (
+//           <FillInTheBlankForm
+//             questionType={questionType}
+//             questionId={selectedQuestion?.id || null}
+//             quizId={quizId}
+//             selectedQuestion={selectedQuestion}
+//             setQuestionType={setQuestionType}
+//           />
+//         )}
+
+//         {questionType === "Matching" && (
+//           <MatchingForm
+//             questionType={questionType}
+//             questionId={selectedQuestion?.id || null}
+//             quizId={quizId}
+//             selectedQuestion={selectedQuestion}
+//             setQuestionType={setQuestionType}
+//           />
+//         )}
+
+//         {questionType === "Short Answer" && (
+//           <ShortAnswerForm
+//             questionType={questionType}
+//             questionId={selectedQuestion?.id || null}
+//             quizId={quizId}
+//             selectedQuestion={selectedQuestion}
+//             setQuestionType={setQuestionType}
+//           />
+//         )}
+
+//         {questionType === "Essay" && (
+//           <EssayForm
+//             questionType={questionType}
+//             questionId={selectedQuestion?.id || null}
+//             quizId={quizId}
+//             selectedQuestion={selectedQuestion}
+//             setQuestionType={setQuestionType}
+//           />
+//         )}
+//       </div>
+//     </div>
+//   );
+// }
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { toast, Toaster } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faSpinner } from "@fortawesome/free-solid-svg-icons";
-export default function CreateQuiz({ questionId, quizId, selectedQuestion }) {
+
+// Create a wrapper component with Suspense
+export default function CreateQuizWrapper({ questionId, quizId, selectedQuestion }) {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF8474]"></div>
+      </div>
+    }>
+      <CreateQuiz 
+        questionId={questionId} 
+        quizId={quizId} 
+        selectedQuestion={selectedQuestion} 
+      />
+    </Suspense>
+  );
+}
+
+// Your original component (now nested inside the wrapper)
+function CreateQuiz({ questionId, quizId, selectedQuestion }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [course, setCourse] = useState("");
@@ -147,7 +315,6 @@ export default function CreateQuiz({ questionId, quizId, selectedQuestion }) {
     </div>
   );
 }
-
 function MultipleChoiceForm({
   questionId,
   quizId,
