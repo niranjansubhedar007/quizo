@@ -1,9 +1,7 @@
-
-  
-
+// pages/app/create-quiz.js
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -27,36 +25,7 @@ import {
   faCheckCircle,
   faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
-// import dynamic from "next/dynamic";
-
-// const CreateQuiz = dynamic(() => import("../createQuiz/page"), { ssr: false });
-
-// Create a wrapper component with Suspense
-function QuizWithSuspense({ quizId, selectedQuestion, currentQuestionId }) {
-  const searchParams = useSearchParams();
-  return (
-    <QuizContent 
-      quizId={quizId || searchParams.get("id")}
-      selectedQuestion={selectedQuestion}
-      currentQuestionId={currentQuestionId}
-    />
-  );
-}
-
 export default function Quiz() {
-  return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF8474]"></div>
-      </div>
-    }>
-      <QuizWithSuspense />
-    </Suspense>
-  );
-}
-
-// Your original component (now nested inside the wrapper)
-function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState("");
@@ -68,9 +37,11 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const [questions, setQuestions] = useState([]);
   const [questionsPreview, setQuestionsPreview] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [currentQuestionIdInternal, setCurrentQuestionIdInternal] = useState(currentQuestionId || null);
+  const searchParams = useSearchParams();
+  const quizId = searchParams.get("id");
+  const [currentQuestionId, setCurrentQuestionId] = useState(null);
   const [quiz, setQuiz] = useState(null);
-  const [selectedQuestionInternal, setSelectedQuestionInternal] = useState(selectedQuestion || null);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [showPreview, setShowPreview] = useState(false);
 
   const fetchAllQuestions = async () => {
@@ -92,14 +63,13 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
     if (!quizId) return; // Only run if quizId exists
     fetchAllQuestions(); // This should only fetch quiz-specific questions ideally
   }, [quizId]);
-  
   const handlePreviewClick = () => {
     setShowPreview(true);
     setShowAddQuestion(false);
     setShowQuiz(false);
     setShowList(false);
-    setSelectedQuestionInternal(null);
-    setCurrentQuestionIdInternal(null);
+    setSelectedQuestion(null);
+    setCurrentQuestionId(null);
   };
 
   useEffect(() => {
@@ -153,7 +123,6 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   });
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const router = useRouter();
-  
   const handleQuestionSelect = async (questionId) => {
     try {
       const { data, error } = await supabase
@@ -164,8 +133,8 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
 
       if (error) throw error;
 
-      setSelectedQuestionInternal(data);
-      setCurrentQuestionIdInternal(questionId);
+      setSelectedQuestion(data);
+      setCurrentQuestionId(questionId);
       setShowAddQuestion(true);
       setShowQuiz(false);
       setShowList(false);
@@ -201,27 +170,27 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
 
     fetchQuestions();
   }, [quizId]);
-  const refreshQuestions = async () => {
+
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this question?")) return;
+
     try {
-      setFetchingQuestions(true);
-      if (!quizId) return;
+      const { error } = await supabase.from("Question").delete().eq("id", id);
+      if (error) throw error;
 
-      const { data: questionsData, error: questionError } = await supabase
-        .from("Question")
-        .select("id, question")
-        .eq("quiz_id", quizId);
-
-      if (questionError) throw questionError;
-
-      setQuestions(questionsData || []);
+      toast.success("Question deleted successfully");
+      // Refresh questions after deletion
+      const updatedQuestions = { ...questions };
+      for (const course in updatedQuestions) {
+        updatedQuestions[course] = updatedQuestions[course].filter(
+          (q) => q.id !== id
+        );
+      }
+      setQuestions(updatedQuestions);
     } catch (error) {
-      toast.error(`Error loading questions: ${error.message}`);
-    } finally {
-      setFetchingQuestions(false);
+      toast.error(`Error deleting question: ${error.message}`);
     }
   };
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -266,12 +235,12 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   };
 
   const handleAddQuestion = () => {
-    setSelectedQuestionInternal(null);
+    setSelectedQuestion(null);
     setShowAddQuestion(!showAddQuestion);
     setShowQuiz(false);
     setShowList(false);
     setShowPreview(false);
-    setCurrentQuestionIdInternal(null);
+    setCurrentQuestionId(null);
   };
 
   const handleBackToQuizForm = () => {
@@ -279,7 +248,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
     setShowQuiz(false);
     setShowList(true); // Show the form
     setShowPreview(false);
-    setSelectedQuestionInternal(null);
+    setSelectedQuestion(null);
   };
 
   const handleBackToQuestions = () => {
@@ -289,7 +258,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   };
 
   const handleEdit = (question) => {
-    setCurrentQuestionIdInternal(question.id);
+    setCurrentQuestionId(question.id);
     setShowAddQuestion(true);
     setShowQuiz(false);
     setShowList(false);
@@ -298,7 +267,6 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const handleBackToQuizList = () => {
     router.push("/quizList");
   };
-  
   const handleFinalSubmit = async () => {
     if (!quizId) {
       toast.error("Quiz ID is missing");
@@ -318,14 +286,8 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
       toast.error(`Failed to submit quiz: ${error.message}`);
     }
   };
+  
 
-
-  const handleQuestionSaved = () => {
-    refreshQuestions();
-    fetchAllQuestions()
-    setShowAddQuestion(false);
-    // setShowQuiz(true);
-  };
   return (
     <>
       <div className="ml-2">
@@ -381,9 +343,9 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                       key={q.id}
                       onClick={() => handleQuestionSelect(q.id)}
                       className={`w-full text-left cursor-pointer px-4 py-2.5 rounded-lg transition-all text-white hover:bg-[#9F5F80] ${
-                        selectedQuestionInternal?.id === q.id
+                        selectedQuestion?.id === q.id
                           ? "bg-[#9F5F80] border-l-4 border-[#FF8474]"
-                          : "bg-[#583D72] "
+                          : "bg-[#583D72]"
                       }`}
                     >
                       {`Question ${index + 1}`}
@@ -727,7 +689,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
           )}
 
           {/* Questions List */}
-          {/* {showQuiz && (
+          {showQuiz && (
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="px-6 py-4 border-b border-[#FFC996] bg-[#FFF5F0]">
                 <div className="flex flex-col md:flex-row md:items-center justify-between">
@@ -877,18 +839,16 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                 </div>
               )}
             </div>
-          )} */}
+          )}
 
           {showAddQuestion && (
             <div className="bg-white overflow-hidden">
               <div className="pt-5">
                 <CreateQuiz
-           
-                questionId={currentQuestionIdInternal}
-                quizId={quizId}
-                selectedQuestion={selectedQuestionInternal}
-                onQuestionSaved={handleQuestionSaved} // Pass the callback
-                
+                  questionId={currentQuestionId}
+                  quizId={quizId}
+                  selectedQuestion={selectedQuestion}
+        
                 />
               </div>
             </div>

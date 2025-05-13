@@ -1,32 +1,11 @@
-
 "use client";
-import React, { useEffect, useState, Suspense } from "react";
+import React, { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { toast, Toaster } from "react-hot-toast";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faSpinner } from "@fortawesome/free-solid-svg-icons";
-
-// Create a wrapper component with Suspense
-export default function CreateQuizWrapper({ questionId, quizId, selectedQuestion , onQuestionSaved  }) {
-  return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF8474]"></div>
-      </div>
-    }>
-      <CreateQuiz 
-        questionId={questionId} 
-        quizId={quizId} 
-        selectedQuestion={selectedQuestion} 
-        onQuestionSaved={onQuestionSaved}
-      />
-    </Suspense>
-  );
-}
-
-// Your original component (now nested inside the wrapper)
-function CreateQuiz({ questionId, quizId, selectedQuestion , onQuestionSaved  }) {
+export default function CreateQuiz({ questionId, quizId, selectedQuestion }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [course, setCourse] = useState("");
@@ -112,7 +91,6 @@ function CreateQuiz({ questionId, quizId, selectedQuestion , onQuestionSaved  })
             quizId={quizId}
             selectedQuestion={selectedQuestion}
             setQuestionType={setQuestionType}
-            onQuestionSaved={onQuestionSaved}
           />
         )}
 
@@ -123,8 +101,6 @@ function CreateQuiz({ questionId, quizId, selectedQuestion , onQuestionSaved  })
             quizId={quizId}
             selectedQuestion={selectedQuestion}
             setQuestionType={setQuestionType}
-            onQuestionSaved={onQuestionSaved}
-
           />
         )}
 
@@ -135,8 +111,6 @@ function CreateQuiz({ questionId, quizId, selectedQuestion , onQuestionSaved  })
             quizId={quizId}
             selectedQuestion={selectedQuestion}
             setQuestionType={setQuestionType}
-            onQuestionSaved={onQuestionSaved}
-
           />
         )}
 
@@ -147,8 +121,6 @@ function CreateQuiz({ questionId, quizId, selectedQuestion , onQuestionSaved  })
             quizId={quizId}
             selectedQuestion={selectedQuestion}
             setQuestionType={setQuestionType}
-            onQuestionSaved={onQuestionSaved}
-
           />
         )}
 
@@ -159,8 +131,6 @@ function CreateQuiz({ questionId, quizId, selectedQuestion , onQuestionSaved  })
             quizId={quizId}
             selectedQuestion={selectedQuestion}
             setQuestionType={setQuestionType}
-            onQuestionSaved={onQuestionSaved}
-
           />
         )}
 
@@ -171,21 +141,18 @@ function CreateQuiz({ questionId, quizId, selectedQuestion , onQuestionSaved  })
             quizId={quizId}
             selectedQuestion={selectedQuestion}
             setQuestionType={setQuestionType}
-            onQuestionSaved={onQuestionSaved}
-
           />
         )}
       </div>
     </div>
   );
 }
+
 function MultipleChoiceForm({
   questionId,
   quizId,
   selectedQuestion,
   setQuestionType,
-  onQuestionSaved,
-  
 }) {
   const [formData, setFormData] = useState({
     question: selectedQuestion?.question || "",
@@ -306,7 +273,7 @@ function MultipleChoiceForm({
         `Question ${questionId ? "updated" : "saved"} successfully!`
       );
       setQuestionType("");
-      onQuestionSaved?.(); // Call the callback here
+
       if (!questionId) {
         setFormData({
           question: "",
@@ -470,7 +437,6 @@ function TrueFalseForm({
   quizId,
   selectedQuestion,
   setQuestionType,
-  onQuestionSaved
 }) {
   const [formData, setFormData] = useState({
     question: selectedQuestion?.question || "",
@@ -556,7 +522,6 @@ function TrueFalseForm({
         `Question ${questionId ? "updated" : "saved"} successfully!`
       );
       setQuestionType("");
-      onQuestionSaved?.(); // Call the callback here
     } catch (error) {
       toast.error(`Error saving question: ${error.message}`);
     } finally {
@@ -689,7 +654,6 @@ function FillInTheBlankForm({
   quizId,
   selectedQuestion,
   setQuestionType,
-  onQuestionSaved
 }) {
   const [formData, setFormData] = useState({
     question: selectedQuestion?.question || "",
@@ -790,7 +754,6 @@ function FillInTheBlankForm({
         `Question ${questionId ? "updated" : "saved"} successfully!`
       );
       setQuestionType("");
-      onQuestionSaved?.(); // Call the callback here
     } catch (error) {
       toast.error(`Error saving question: ${error.message}`);
     } finally {
@@ -940,7 +903,7 @@ function FillInTheBlankForm({
   );
 }
 
-function EssayForm({ questionId, quizId, selectedQuestion, setQuestionType , onQuestionSaved }) {
+function EssayForm({ questionId, quizId, selectedQuestion, setQuestionType }) {
   const [formData, setFormData] = useState({
     question: selectedQuestion?.question || "",
     hint: selectedQuestion?.hint || "",
@@ -1016,7 +979,6 @@ function EssayForm({ questionId, quizId, selectedQuestion, setQuestionType , onQ
         `Question ${questionId ? "updated" : "saved"} successfully!`
       );
       setQuestionType("");
-      onQuestionSaved?.(); // Call the callback here
     } catch (error) {
       toast.error(`Error saving question: ${error.message}`);
     } finally {
@@ -1119,7 +1081,6 @@ function ShortAnswerForm({
   quizId,
   selectedQuestion,
   setQuestionType,
-  onQuestionSaved
 }) {
   const [formData, setFormData] = useState({
     question: selectedQuestion?.question || "",
@@ -1196,7 +1157,6 @@ function ShortAnswerForm({
         `Question ${questionId ? "updated" : "saved"} successfully!`
       );
       setQuestionType("");
-      onQuestionSaved?.(); // Call the callback here
     } catch (error) {
       toast.error(`Error saving question: ${error.message}`);
     } finally {
@@ -1303,7 +1263,6 @@ function MatchingForm({
   quizId,
   selectedQuestion,
   setQuestionType,
-  onQuestionSaved
 }) {
   const [formData, setFormData] = useState({
     question: selectedQuestion?.question || "",
@@ -1422,7 +1381,6 @@ function MatchingForm({
         `Question ${questionId ? "updated" : "saved"} successfully!`
       );
       setQuestionType("");
-      onQuestionSaved?.(); // Call the callback here
     } catch (error) {
       toast.error(`Error saving question: ${error.message}`);
     } finally {

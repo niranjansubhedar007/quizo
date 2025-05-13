@@ -173,9 +173,9 @@ const QuizList = () => {
               <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FFC996]"></div>
             </div>
           ) : currentQuizzes.length === 0 ? (
-            <div className="text-center py-12 text-white">
+            <div className="text-center py-20 mt-20 text-white">
               <h3 className="text-lg font-medium">No quizzes found</h3>
-              <p className="text-[#FFC996]">Try a different search</p>
+              <p className="text-[#FFC996]">Try a different search or add new quiz.</p>
             </div>
           ) : showList ? (
             // ✅ List view
