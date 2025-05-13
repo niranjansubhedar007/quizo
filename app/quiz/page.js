@@ -1,7 +1,296 @@
-// pages/app/create-quiz.js
+// // pages/app/create-quiz.js
+// "use client";
+
+// import { useState, useEffect } from "react";
+// import { useRouter } from "next/navigation";
+// import { supabase } from "../lib/supabase";
+// import { toast } from "react-hot-toast";
+// import { useSearchParams } from "next/navigation";
+// import CreateQuiz from "../createQuiz/page";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import {
+//   faEye,
+//   faEyeSlash,
+//   faUser,
+//   faEnvelope,
+//   faHome,
+//   faPlus,
+//   faArrowLeft,
+//   faList,
+//   faEye as faPreview,
+//   faTrash,
+//   faEdit,
+//   faInfo,
+//   faInfoCircle,
+//   faCheckCircle,
+//   faCircleCheck,
+// } from "@fortawesome/free-solid-svg-icons";
+// export default function Quiz() {
+//   const [name, setName] = useState("");
+//   const [category, setCategory] = useState("");
+//   const [tags, setTags] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [showList, setShowList] = useState(false);
+//   const [showQuiz, setShowQuiz] = useState(false);
+//   const [showAddQuestion, setShowAddQuestion] = useState(false);
+//   const [message, setMessage] = useState(null);
+//   const [questions, setQuestions] = useState([]);
+//   const [questionsPreview, setQuestionsPreview] = useState([]);
+//   const [categories, setCategories] = useState([]);
+//   const searchParams = useSearchParams();
+//   const quizId = searchParams.get("id");
+//   const [currentQuestionId, setCurrentQuestionId] = useState(null);
+//   const [quiz, setQuiz] = useState(null);
+//   const [selectedQuestion, setSelectedQuestion] = useState(null);
+//   const [showPreview, setShowPreview] = useState(false);
+
+//   const fetchAllQuestions = async () => {
+//     try {
+//       const { data, error } = await supabase
+//         .from("Question")
+//         .select("*")
+//         .eq("quiz_id", quizId); // filter by quizId
+
+//       if (error) throw error;
+//       setQuestionsPreview(data || []);
+//       console.log("Fetched quiz-specific questions:", data);
+//     } catch (error) {
+//       console.error("Error fetching questions:", error);
+//     }
+//   };
+
+//   useEffect(() => {
+//     if (!quizId) return; // Only run if quizId exists
+//     fetchAllQuestions(); // This should only fetch quiz-specific questions ideally
+//   }, [quizId]);
+//   const handlePreviewClick = () => {
+//     setShowPreview(true);
+//     setShowAddQuestion(false);
+//     setShowQuiz(false);
+//     setShowList(false);
+//     setSelectedQuestion(null);
+//     setCurrentQuestionId(null);
+//   };
+
+//   useEffect(() => {
+//     const fetchQuiz = async () => {
+//       if (!quizId) return;
+//       const { data, error } = await supabase
+//         .from("Quiz")
+//         .select("*")
+//         .eq("id", quizId)
+//         .single();
+//       if (error) {
+//         console.error("Error fetching quiz:", error);
+//       } else {
+//         setQuiz(data);
+//         setName(data.name); // <- Set form fields
+//         setCategory(data.category);
+//         setTags(data.tags);
+//       }
+//     };
+
+//     fetchQuiz();
+//   }, [quizId]);
+
+//   useEffect(() => {
+//     const fetchCategories = async () => {
+//       const { data, error } = await supabase.from("Category").select("*");
+//       if (error) {
+//         toast.error("Failed to load categories");
+//         return;
+//       }
+//       setCategories(data);
+//     };
+
+//     fetchCategories();
+//   }, []);
+
+//   const [filter, setFilter] = useState({
+//     course: "",
+//     type: "",
+//     difficulty: "",
+//     search: "",
+//   });
+//   const [sortConfig, setSortConfig] = useState({
+//     key: "created_at",
+//     direction: "desc",
+//   });
+//   const [pagination, setPagination] = useState({
+//     currentPage: 1,
+//     pageSize: 10,
+//     totalCount: 0,
+//   });
+//   const [fetchingQuestions, setFetchingQuestions] = useState(false);
+//   const router = useRouter();
+//   const handleQuestionSelect = async (questionId) => {
+//     try {
+//       const { data, error } = await supabase
+//         .from("Question")
+//         .select("*")
+//         .eq("id", questionId)
+//         .single();
+
+//       if (error) throw error;
+
+//       setSelectedQuestion(data);
+//       setCurrentQuestionId(questionId);
+//       setShowAddQuestion(true);
+//       setShowQuiz(false);
+//       setShowList(false);
+//       setShowPreview(false);
+
+//       // No need to manually set the type here as it will be set by the CreateQuiz component
+//     } catch (error) {
+//       toast.error(`Error loading question: ${error.message}`);
+//     }
+//   };
+
+//   useEffect(() => {
+//     const fetchQuestions = async () => {
+//       try {
+//         setFetchingQuestions(true);
+//         if (!quizId) return;
+
+//         const { data: questionsData, error: questionError } = await supabase
+//           .from("Question")
+//           .select("id, question") // or whatever your question field is
+//           .eq("quiz_id", quizId);
+
+//         if (questionError) throw questionError;
+
+//         setQuestions(questionsData || []); // not grouped anymore
+//         console.log("Fetched questions:", questionsData);
+//       } catch (error) {
+//         toast.error(`Error loading questions: ${error.message}`);
+//       } finally {
+//         setFetchingQuestions(false);
+//       }
+//     };
+
+//     fetchQuestions();
+//   }, [quizId]);
+
+//   const handleDelete = async (id) => {
+//     if (!confirm("Are you sure you want to delete this question?")) return;
+
+//     try {
+//       const { error } = await supabase.from("Question").delete().eq("id", id);
+//       if (error) throw error;
+
+//       toast.success("Question deleted successfully");
+//       // Refresh questions after deletion
+//       const updatedQuestions = { ...questions };
+//       for (const course in updatedQuestions) {
+//         updatedQuestions[course] = updatedQuestions[course].filter(
+//           (q) => q.id !== id
+//         );
+//       }
+//       setQuestions(updatedQuestions);
+//     } catch (error) {
+//       toast.error(`Error deleting question: ${error.message}`);
+//     }
+//   };
+
+//   const handleSubmit = async (e) => {
+//     e.preventDefault();
+//     setLoading(true);
+//     setMessage(null);
+
+//     try {
+//       let data, error;
+
+//       if (quizId) {
+//         // Update existing quiz
+//         ({ data, error } = await supabase
+//           .from("Quiz")
+//           .update({ name, category, tags })
+//           .eq("id", quizId)
+//           .select());
+//       } else {
+//         // Create new quiz
+//         ({ data, error } = await supabase
+//           .from("Quiz")
+//           .insert([{ name, category, tags }])
+//           .select());
+//       }
+
+//       if (error) throw error;
+
+//       toast.success(
+//         quizId ? "Quiz updated successfully!" : "Quiz created successfully!"
+//       );
+//       setMessage({ type: "success", text: "Quiz saved successfully!" });
+
+//       if (!quizId) {
+//         setName("");
+//         setCategory("");
+//         setTags("");
+//       }
+//     } catch (error) {
+//       toast.error(`Error saving quiz: ${error.message}`);
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   const handleAddQuestion = () => {
+//     setSelectedQuestion(null);
+//     setShowAddQuestion(!showAddQuestion);
+//     setShowQuiz(false);
+//     setShowList(false);
+//     setShowPreview(false);
+//     setCurrentQuestionId(null);
+//   };
+
+//   const handleBackToQuizForm = () => {
+//     setShowAddQuestion(false);
+//     setShowQuiz(false);
+//     setShowList(true); // Show the form
+//     setShowPreview(false);
+//     setSelectedQuestion(null);
+//   };
+
+//   const handleBackToQuestions = () => {
+//     setShowAddQuestion(false);
+//     setShowQuiz(true);
+//     setShowList(false);
+//   };
+
+//   const handleEdit = (question) => {
+//     setCurrentQuestionId(question.id);
+//     setShowAddQuestion(true);
+//     setShowQuiz(false);
+//     setShowList(false);
+//   };
+
+//   const handleBackToQuizList = () => {
+//     router.push("/quizList");
+//   };
+//   const handleFinalSubmit = async () => {
+//     if (!quizId) {
+//       toast.error("Quiz ID is missing");
+//       return;
+//     }
+  
+//     try {
+//       const { error } = await supabase
+//         .from("Quiz")
+//         .update({ is_submit: true })
+//         .eq("id", quizId);
+  
+//       if (error) throw error;
+  
+//       toast.success("Quiz submitted successfully!");
+//     } catch (error) {
+//       toast.error(`Failed to submit quiz: ${error.message}`);
+//     }
+//   };
+  
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { toast } from "react-hot-toast";
@@ -25,7 +314,36 @@ import {
   faCheckCircle,
   faCircleCheck,
 } from "@fortawesome/free-solid-svg-icons";
+// import dynamic from "next/dynamic";
+
+// const CreateQuiz = dynamic(() => import("../createQuiz/page"), { ssr: false });
+
+// Create a wrapper component with Suspense
+function QuizWithSuspense({ quizId, selectedQuestion, currentQuestionId }) {
+  const searchParams = useSearchParams();
+  return (
+    <QuizContent 
+      quizId={quizId || searchParams.get("id")}
+      selectedQuestion={selectedQuestion}
+      currentQuestionId={currentQuestionId}
+    />
+  );
+}
+
 export default function Quiz() {
+  return (
+    <Suspense fallback={
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF8474]"></div>
+      </div>
+    }>
+      <QuizWithSuspense />
+    </Suspense>
+  );
+}
+
+// Your original component (now nested inside the wrapper)
+function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [tags, setTags] = useState("");
@@ -37,11 +355,9 @@ export default function Quiz() {
   const [questions, setQuestions] = useState([]);
   const [questionsPreview, setQuestionsPreview] = useState([]);
   const [categories, setCategories] = useState([]);
-  const searchParams = useSearchParams();
-  const quizId = searchParams.get("id");
-  const [currentQuestionId, setCurrentQuestionId] = useState(null);
+  const [currentQuestionIdInternal, setCurrentQuestionIdInternal] = useState(currentQuestionId || null);
   const [quiz, setQuiz] = useState(null);
-  const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedQuestionInternal, setSelectedQuestionInternal] = useState(selectedQuestion || null);
   const [showPreview, setShowPreview] = useState(false);
 
   const fetchAllQuestions = async () => {
@@ -63,13 +379,14 @@ export default function Quiz() {
     if (!quizId) return; // Only run if quizId exists
     fetchAllQuestions(); // This should only fetch quiz-specific questions ideally
   }, [quizId]);
+  
   const handlePreviewClick = () => {
     setShowPreview(true);
     setShowAddQuestion(false);
     setShowQuiz(false);
     setShowList(false);
-    setSelectedQuestion(null);
-    setCurrentQuestionId(null);
+    setSelectedQuestionInternal(null);
+    setCurrentQuestionIdInternal(null);
   };
 
   useEffect(() => {
@@ -123,6 +440,7 @@ export default function Quiz() {
   });
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const router = useRouter();
+  
   const handleQuestionSelect = async (questionId) => {
     try {
       const { data, error } = await supabase
@@ -133,8 +451,8 @@ export default function Quiz() {
 
       if (error) throw error;
 
-      setSelectedQuestion(data);
-      setCurrentQuestionId(questionId);
+      setSelectedQuestionInternal(data);
+      setCurrentQuestionIdInternal(questionId);
       setShowAddQuestion(true);
       setShowQuiz(false);
       setShowList(false);
@@ -235,12 +553,12 @@ export default function Quiz() {
   };
 
   const handleAddQuestion = () => {
-    setSelectedQuestion(null);
+    setSelectedQuestionInternal(null);
     setShowAddQuestion(!showAddQuestion);
     setShowQuiz(false);
     setShowList(false);
     setShowPreview(false);
-    setCurrentQuestionId(null);
+    setCurrentQuestionIdInternal(null);
   };
 
   const handleBackToQuizForm = () => {
@@ -248,7 +566,7 @@ export default function Quiz() {
     setShowQuiz(false);
     setShowList(true); // Show the form
     setShowPreview(false);
-    setSelectedQuestion(null);
+    setSelectedQuestionInternal(null);
   };
 
   const handleBackToQuestions = () => {
@@ -258,7 +576,7 @@ export default function Quiz() {
   };
 
   const handleEdit = (question) => {
-    setCurrentQuestionId(question.id);
+    setCurrentQuestionIdInternal(question.id);
     setShowAddQuestion(true);
     setShowQuiz(false);
     setShowList(false);
@@ -267,6 +585,7 @@ export default function Quiz() {
   const handleBackToQuizList = () => {
     router.push("/quizList");
   };
+  
   const handleFinalSubmit = async () => {
     if (!quizId) {
       toast.error("Quiz ID is missing");
@@ -286,7 +605,6 @@ export default function Quiz() {
       toast.error(`Failed to submit quiz: ${error.message}`);
     }
   };
-  
   return (
     <>
       <div className="ml-2">
@@ -844,9 +1162,12 @@ export default function Quiz() {
             <div className="bg-white overflow-hidden">
               <div className="pt-5">
                 <CreateQuiz
-                  questionId={currentQuestionId}
-                  quizId={quizId}
-                  selectedQuestion={selectedQuestion}
+                //   questionId={currentQuestionId}
+                //   quizId={quizId}
+                //   selectedQuestion={selectedQuestion}
+                questionId={currentQuestionIdInternal}
+                quizId={quizId}
+                selectedQuestion={selectedQuestionInternal}
                 />
               </div>
             </div>
