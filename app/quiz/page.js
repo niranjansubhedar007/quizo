@@ -1,12 +1,9 @@
-
-  
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
-import { toast } from "react-hot-toast";
+import { toast, Toaster } from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import CreateQuiz from "../createQuiz/page";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -35,7 +32,7 @@ import {
 function QuizWithSuspense({ quizId, selectedQuestion, currentQuestionId }) {
   const searchParams = useSearchParams();
   return (
-    <QuizContent 
+    <QuizContent
       quizId={quizId || searchParams.get("id")}
       selectedQuestion={selectedQuestion}
       currentQuestionId={currentQuestionId}
@@ -45,11 +42,13 @@ function QuizWithSuspense({ quizId, selectedQuestion, currentQuestionId }) {
 
 export default function Quiz() {
   return (
-    <Suspense fallback={
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF8474]"></div>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FF8474]"></div>
+        </div>
+      }
+    >
       <QuizWithSuspense />
     </Suspense>
   );
@@ -68,9 +67,15 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const [questions, setQuestions] = useState([]);
   const [questionsPreview, setQuestionsPreview] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [currentQuestionIdInternal, setCurrentQuestionIdInternal] = useState(currentQuestionId || null);
+  const [currentQuestionIdInternal, setCurrentQuestionIdInternal] = useState(
+    currentQuestionId || null
+  );
+  const [showModal, setShowModal] = useState(false);
+  const [showModalSubmit, setShowModalSubmit] = useState(false);
   const [quiz, setQuiz] = useState(null);
-  const [selectedQuestionInternal, setSelectedQuestionInternal] = useState(selectedQuestion || null);
+  const [selectedQuestionInternal, setSelectedQuestionInternal] = useState(
+    selectedQuestion || null
+  );
   const [showPreview, setShowPreview] = useState(false);
 
   const fetchAllQuestions = async () => {
@@ -92,7 +97,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
     if (!quizId) return; // Only run if quizId exists
     fetchAllQuestions(); // This should only fetch quiz-specific questions ideally
   }, [quizId]);
-  
+
   const handlePreviewClick = () => {
     setShowPreview(true);
     setShowAddQuestion(false);
@@ -153,7 +158,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   });
   const [fetchingQuestions, setFetchingQuestions] = useState(false);
   const router = useRouter();
-  
+
   const handleQuestionSelect = async (questionId) => {
     try {
       const { data, error } = await supabase
@@ -220,8 +225,6 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
       setFetchingQuestions(false);
     }
   };
-
-
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -298,31 +301,58 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const handleBackToQuizList = () => {
     router.push("/quizList");
   };
-  
+
   const handleFinalSubmit = async () => {
     if (!quizId) {
       toast.error("Quiz ID is missing");
       return;
     }
-  
+
     try {
-      const { error } = await supabase
+      // Fetch quiz data first
+      const { data, error } = await supabase
         .from("Quiz")
-        .update({ is_submit: true })
-        .eq("id", quizId);
-  
+        .select("is_submit")
+        .eq("id", quizId)
+        .single();
+
       if (error) throw error;
-  
-      toast.success("Quiz submitted successfully!");
+
+      if (data.is_submit) {
+        // Quiz already submitted, show modal to confirm unsubmit
+        setShowModal(true);
+      } else {
+        // Proceed to submit
+        const { error: updateError } = await supabase
+          .from("Quiz")
+          .update({ is_submit: true })
+          .eq("id", quizId);
+
+        if (updateError) throw updateError;
+        setShowModalSubmit(true);
+      }
     } catch (error) {
-      toast.error(`Failed to submit quiz: ${error.message}`);
+      toast.error(`Error: ${error.message}`);
     }
   };
 
+  const handleUnsubmit = async () => {
+    const { error } = await supabase
+      .from("Quiz")
+      .update({ is_submit: false })
+      .eq("id", quizId);
+
+    if (error) {
+      toast.error("Failed to unsubmit quiz");
+      return;
+    }
+
+    setShowModal(false);
+  };
 
   const handleQuestionSaved = () => {
     refreshQuestions();
-    fetchAllQuestions()
+    fetchAllQuestions();
     setShowAddQuestion(false);
     // setShowQuiz(true);
   };
@@ -335,7 +365,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
           className="text-xl mb-4 fixed  text-white   z-10 top-2 cursor-pointer  flex items-center justify-center px-4 py-2.5 rounded-lg transition-all bg-[#583D72]  border border-[#9F5F80] hover:bg-[#4A3265]"
         />
       </div>
-      <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] ">
+      <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] -z-10">
         {/* Sidebar - Fixed width and sticky */}
         <div className="w-64 bg-[#583D72] text-white p-2 shadow-lg md:fixed md:h-screen md:overflow-y-auto">
           <div className="flex flex-col h-full">
@@ -725,7 +755,59 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
               </div>
             </div>
           )}
+          {showModal && (
+            <div className="fixed inset-0 z-50 bg-opacity-30 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
+                <h2 className="text-lg font-semibold mb-4 text-center">
+                  Quiz Already Submitted !
+                </h2>
+                <p className="mb-4 text-center">
+                  Do you want to unsubmit{" "}
+                  <span className="text-[#9F5F80] font-bold">
+                    {" "}
+                    {quiz.name}{" "}
+                  </span>
+                  ?
+                </p>
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={handleUnsubmit}
+                    className="bg-[#9F5F80] text-white px-5 py-2 rounded hover:bg-[#8E4E75]"
+                  >
+                    OK
+                  </button>
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="bg-gray-300 px-5 py-2 rounded hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+          {showModalSubmit && (
+            <div className="fixed inset-0 z-50 bg-opacity-30 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
+                <h2 className="text-lg  mb-4 text-center">
+                  <span className="text-[#9F5F80] font-bold">
+                    {" "}
+                    {quiz.name}{" "}
+                  </span>{" "}
+                  Submitted Successfully!
+                </h2>
 
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={() => setShowModalSubmit(false)}
+                    className="bg-gray-300 px-5 py-2 rounded hover:bg-gray-400"
+                  >
+                    Ok
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {/* Questions List */}
           {/* {showQuiz && (
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
@@ -883,12 +965,10 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
             <div className="bg-white overflow-hidden">
               <div className="pt-5">
                 <CreateQuiz
-           
-                questionId={currentQuestionIdInternal}
-                quizId={quizId}
-                selectedQuestion={selectedQuestionInternal}
-                onQuestionSaved={handleQuestionSaved} // Pass the callback
-                
+                  questionId={currentQuestionIdInternal}
+                  quizId={quizId}
+                  selectedQuestion={selectedQuestionInternal}
+                  onQuestionSaved={handleQuestionSaved} // Pass the callback
                 />
               </div>
             </div>
