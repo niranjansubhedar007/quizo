@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import { toast, Toaster } from "react-hot-toast";
@@ -70,6 +70,8 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const [currentQuestionIdInternal, setCurrentQuestionIdInternal] = useState(
     currentQuestionId || null
   );
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [showModal, setShowModal] = useState(false);
   const [showModalSubmit, setShowModalSubmit] = useState(false);
   const [quiz, setQuiz] = useState(null);
@@ -356,6 +358,13 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
     setShowAddQuestion(false);
     // setShowQuiz(true);
   };
+
+  const filteredQuestions = useMemo(() => {
+    return questionsPreview.filter((question) =>
+      question.question.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [questionsPreview, searchTerm]);
+
   return (
     <>
       <div className="ml-2">
@@ -458,13 +467,23 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                 <h2 className="text-2xl font-bold text-[#583D72]">
                   Quiz Preview
                 </h2>
+                <div className="">
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Search question..."
+                    className="w-full p-3 border border-[#FFC996] rounded-lg focus:ring-2 focus:ring-[#FF8474]"
+                  />
+                </div>
+
                 <span className="bg-[#FFC996] text-[#583D72] px-3 py-1 rounded-full text-sm font-medium">
                   {questions.length} Questions
                 </span>
               </div>
 
-              <div className="space-y-6">
-                {questionsPreview.map((question, index) => (
+              <div className="space-y-6 overflow-y-auto max-h-[33rem]">
+                {filteredQuestions.map((question, index) => (
                   <div
                     key={question.id}
                     className="p-6 bg-white rounded-lg border border-[#FFC996] shadow-sm"
@@ -652,7 +671,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium text-[#583D72]">
-                      Quiz Name
+                      Quiz Name <span className="text-red-400">*</span>
                     </label>
                     <input
                       type="text"
@@ -808,158 +827,6 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
               </div>
             </div>
           )}
-          {/* Questions List */}
-          {/* {showQuiz && (
-            <div className="bg-white rounded-xl shadow-md overflow-hidden">
-              <div className="px-6 py-4 border-b border-[#FFC996] bg-[#FFF5F0]">
-                <div className="flex flex-col md:flex-row md:items-center justify-between">
-                  <div className="mb-2 md:mb-0">
-                    <h2 className="text-lg font-semibold text-[#583D72]">
-                      {filter.course} Questions
-                    </h2>
-                    <p className="text-sm text-[#9F5F80]">
-                      {questions[filter.course]?.length || 0} questions
-                      available
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {questions[filter.course]?.length === 0 ? (
-                <div className="p-12 text-center">
-                  <div className="mx-auto h-24 w-24 text-[#9F5F80]">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1}
-                        d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <h3 className="mt-4 text-lg font-medium text-[#583D72]">
-                    No questions found
-                  </h3>
-                  <p className="mt-1 text-sm text-[#9F5F80]">
-                    Get started by adding a new question
-                  </p>
-                  <div className="mt-6">
-                    <button
-                      onClick={handleAddQuestion}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#FF8474] hover:bg-[#FF6B5B] focus:outline-none"
-                    >
-                      <FontAwesomeIcon icon={faPlus} className="mr-2" />
-                      Add Question
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-[#FFC996]">
-                    <thead className="bg-[#FFF5F0]">
-                      <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-[#583D72] uppercase tracking-wider"
-                        >
-                          #
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-[#583D72] uppercase tracking-wider"
-                        >
-                          Question
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-[#583D72] uppercase tracking-wider"
-                        >
-                          Type
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-[#583D72] uppercase tracking-wider"
-                        >
-                          Difficulty
-                        </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-right text-xs font-medium text-[#583D72] uppercase tracking-wider"
-                        >
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-[#FFC996]">
-                      {questions[filter.course]?.map((q, index) => (
-                        <tr key={q.id} className="hover:bg-[#FFF5F0]">
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-[#583D72]">
-                            {index + 1}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-800 max-w-xs">
-                            <div className="line-clamp-2">{q.question}</div>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#583D72]">
-                            <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                q.type === "multiple"
-                                  ? "bg-[#F3E8FF] text-[#7E3AF2]"
-                                  : "bg-[#DEF7EC] text-[#0E9F6E]"
-                              }`}
-                            >
-                              {q.type === "multiple"
-                                ? "Multiple Choice"
-                                : "True/False"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-[#583D72]">
-                            <span
-                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize ${
-                                q.difficulty === "hard"
-                                  ? "bg-[#FDE8E8] text-[#C81E1E]"
-                                  : q.difficulty === "medium"
-                                  ? "bg-[#FEF3C7] text-[#92400E]"
-                                  : "bg-[#DEF7EC] text-[#0E9F6E]"
-                              }`}
-                            >
-                              {q.difficulty || "N/A"}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <div className="flex justify-end space-x-4">
-                              <button
-                                onClick={() => handleEdit(q)}
-                                className="text-[#9F5F80] hover:text-[#7E3A6E] flex items-center"
-                              >
-                                <FontAwesomeIcon
-                                  icon={faEdit}
-                                  className="mr-1"
-                                />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(q.id)}
-                                className="text-[#FF8474] hover:text-[#FF6B5B] flex items-center"
-                              >
-                                <FontAwesomeIcon
-                                  icon={faTrash}
-                                  className="mr-1"
-                                />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          )} */}
 
           {showAddQuestion && (
             <div className="bg-white overflow-hidden">
