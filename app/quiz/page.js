@@ -497,7 +497,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                   {/* Right: Question Count & Total Points */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
                     <span className="bg-[#FFC996] text-[#583D72] px-4 py-1 rounded-full font-medium whitespace-nowrap">
-                      {questions.length} Questions
+                      {questions.length} Questions.
                     </span>
                     <span className="bg-[#FFF5F0] text-[#FF8474] px-4 py-1 rounded-full font-semibold whitespace-nowrap">
                       Total Mark: {totalPoints}
