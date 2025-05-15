@@ -74,6 +74,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
 
   const [showModal, setShowModal] = useState(false);
   const [showModalSubmit, setShowModalSubmit] = useState(false);
+  const [showModalDelete, setShowModalDelete] = useState(false);
   const [quiz, setQuiz] = useState(null);
   const [selectedQuestionInternal, setSelectedQuestionInternal] = useState(
     selectedQuestion || null
@@ -364,6 +365,18 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
       question.question.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [questionsPreview, searchTerm]);
+  const handleDelete = async (id) => {
+    const { error } = await supabase.from("Question").delete().eq("id", id);
+    if (error) {
+      console.error("Delete error:", error.message);
+      alert("Failed to delete question.");
+    } else {
+      setQuestionsPreview((prev) => prev.filter((q) => q.id !== id));
+    }
+  };
+  const totalPoints = useMemo(() => {
+    return filteredQuestions.reduce((sum, q) => sum + (q.points || 0), 0);
+  }, [filteredQuestions]);
 
   return (
     <>
@@ -463,23 +476,34 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
         <main className="flex-1 md:ml-64 ">
           {showPreview && (
             <div className="bg-white rounded-xl shadow-md p-6 w-full mx-auto">
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-2xl font-bold text-[#583D72]">
-                  Quiz Preview
-                </h2>
-                <div className="">
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Search question..."
-                    className="w-full p-3 border border-[#FFC996] rounded-lg focus:ring-2 focus:ring-[#FF8474]"
-                  />
-                </div>
+              <div className="bg-white mb-6">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                  {/* Left: Title */}
+                  <h2 className="text-2xl font-bold text-[#583D72]">
+                    Quiz Preview
+                  </h2>
 
-                <span className="bg-[#FFC996] text-[#583D72] px-3 py-1 rounded-full text-sm font-medium">
-                  {questions.length} Questions
-                </span>
+                  {/* Middle: Search */}
+                  <div className="flex-1 max-w-md">
+                    <input
+                      type="text"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      placeholder="Search question..."
+                      className="w-full p-3 border border-[#FFC996] rounded-lg focus:ring-2 focus:ring-[#FF8474] placeholder:text-gray-400"
+                    />
+                  </div>
+
+                  {/* Right: Question Count & Total Points */}
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+                    <span className="bg-[#FFC996] text-[#583D72] px-4 py-1 rounded-full font-medium whitespace-nowrap">
+                      {questions.length} Questions
+                    </span>
+                    <span className="bg-[#FFF5F0] text-[#FF8474] px-4 py-1 rounded-full font-semibold whitespace-nowrap">
+                      Total Mark: {totalPoints}
+                    </span>
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-6 overflow-y-auto max-h-[33rem]">
@@ -500,6 +524,13 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                           {question.type} • {question.difficulty || "Medium"}
                         </p>
                       </div>
+                      <button
+                        onClick={() => setShowModalDelete(true)}
+                        className=" font-semibold text-[#FF8474] bg-[#FFF5F0] rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-200 hover:text-red-400 cursor-pointer"
+                        title="Delete this question"
+                      >
+                        <FontAwesomeIcon icon={faTrash} size={15} />
+                      </button>
                     </div>
 
                     {/* Conditional rendering based on question type */}
@@ -819,7 +850,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                 <div className="flex justify-center gap-4">
                   <button
                     onClick={() => setShowModalSubmit(false)}
-                    className="bg-gray-300 px-5 py-2 rounded hover:bg-gray-400"
+                    className="bg-[#9F5F80] px-5 py-2 rounded hover:bg-[#8E4E75] text-white"
                   >
                     Ok
                   </button>
@@ -827,7 +858,30 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
               </div>
             </div>
           )}
+          {showModalDelete && (
+            <div className="fixed inset-0 z-50 bg-opacity-30 backdrop-blur-sm flex items-center justify-center">
+              <div className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
+                <h2 className="text-lg  mb-4 text-center">
+                  Are you sure you want to delete this Question ?
+                </h2>
 
+                <div className="flex justify-center gap-4">
+                  <button
+                    onClick={() => handleDelete(question.id)}
+                    className="bg-[#9F5F80] px-5 py-2 rounded hover:bg-[#8E4E75] text-white"
+                  >
+                    Ok
+                  </button>
+                  <button
+                    onClick={() => setShowModalDelete(false)}
+                    className="bg-gray-300 px-5 py-2 rounded hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           {showAddQuestion && (
             <div className="bg-white overflow-hidden">
               <div className="pt-5">
