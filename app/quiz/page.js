@@ -524,9 +524,12 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                           {question.type} • {question.difficulty || "Medium"}
                         </p>
                       </div>
+                      {/* <span className="text-sm text-[#9F5F80] mt-1">
+                        {question.points} Marks
+                      </span> */}
                       <button
                         onClick={() => setShowModalDelete(true)}
-                        className=" font-semibold text-[#FF8474] bg-[#FFF5F0] rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-200 hover:text-red-400 cursor-pointer"
+                        className=" font-semibold text-[#FF8474]  bg-[#FFF5F0] rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-200 hover:text-red-400 cursor-pointer"
                         title="Delete this question"
                       >
                         <FontAwesomeIcon icon={faTrash} size={15} />
