@@ -73,58 +73,57 @@ export default function Home() {
     }
   };
 
-  const handleSignIn = async () => {
-    setSubmitAttempted(true);
-  
-    if (!email || !password) {
-      setErrorMessage("Please enter both email and password.");
-      return;
-    }
-  
-    try {
-      const { data, error } = await supabase
-        .from("Authentication_info")
-        .select("email, password")
-        .eq("email", email)
-        .single();
-  
-      if (error || !data) {
-        setErrorMessage("Incorrect email or password. Please try again.");
-        return;
-      }
-  
-      const isPasswordCorrect = await bcrypt.compare(password, data.password);
-      if (!isPasswordCorrect) {
-        setErrorMessage("Incorrect email or password. Please try again.");
-        return;
-      }
-  
-      localStorage.setItem("userEmail", data.email);
-      router.push("/quizList");
-  
-    } catch (err) {
-      console.error("Login error:", err);
-      setErrorMessage("An unexpected error occurred. Please try again later.");
-    }
-  };
-  
-  const handleGoogleSignIn = async () => {
-    try {
-      const result = await signIn("google", {
-        redirect: false,
-        authorizationParams: { prompt: "select_account" },
-      });
+  // const handleSignIn = async () => {
+  //   setSubmitAttempted(true);
 
-      if (result?.error) {
-        console.error("Authentication error:", result.error);
-        setErrorMessage(result.error);
-        return;
-      }
-    } catch (err) {
-      console.error("Sign in error:", err);
-      setErrorMessage("Failed to sign in with Google");
-    }
-  };
+  //   if (!email || !password) {
+  //     setErrorMessage("Please enter both email and password.");
+  //     return;
+  //   }
+
+  //   try {
+  //     const { data, error } = await supabase
+  //       .from("Authentication_info")
+  //       .select("email, password")
+  //       .eq("email", email)
+  //       .single();
+
+  //     if (error || !data) {
+  //       setErrorMessage("Incorrect email or password. Please try again.");
+  //       return;
+  //     }
+
+  //     const isPasswordCorrect = await bcrypt.compare(password, data.password);
+  //     if (!isPasswordCorrect) {
+  //       setErrorMessage("Incorrect email or password. Please try again.");
+  //       return;
+  //     }
+
+  //     localStorage.setItem("userEmail", data.email);
+  //     router.push("/quizList");
+  //   } catch (err) {
+  //     console.error("Login error:", err);
+  //     setErrorMessage("An unexpected error occurred. Please try again later.");
+  //   }
+  // };
+
+  // const handleGoogleSignIn = async () => {
+  //   try {
+  //     const result = await signIn("google", {
+  //       redirect: false,
+  //       authorizationParams: { prompt: "select_account" },
+  //     });
+
+  //     if (result?.error) {
+  //       console.error("Authentication error:", result.error);
+  //       setErrorMessage(result.error);
+  //       return;
+  //     }
+  //   } catch (err) {
+  //     console.error("Sign in error:", err);
+  //     setErrorMessage("Failed to sign in with Google");
+  //   }
+  // };
 
   const handleSignUp = async () => {
     setSubmitAttempted(true);
@@ -168,6 +167,95 @@ export default function Home() {
     }
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const handleSignIn = async () => {
+  setSubmitAttempted(true);
+
+  if (!email || !password) {
+    setErrorMessage("Please enter both email and password.");
+    return;
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("Authentication_info")
+      .select("email, password, name")
+      .eq("email", email)
+      .single();
+
+    if (error || !data) {
+      setErrorMessage("Incorrect email or password. Please try again.");
+      return;
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, data.password);
+    if (!isPasswordCorrect) {
+      setErrorMessage("Incorrect email or password. Please try again.");
+      return;
+    }
+
+    // Save user details to localStorage
+    localStorage.setItem("userEmail", data.email);
+    localStorage.setItem("userName", data.name);
+    localStorage.setItem("loginMethod", "email");
+    
+    router.push("/quizList");
+  } catch (err) {
+    console.error("Login error:", err);
+    setErrorMessage("An unexpected error occurred. Please try again later.");
+  }
+};
+
+const handleGoogleSignIn = async () => {
+  try {
+    const result = await signIn("google", {
+      redirect: false,
+      authorizationParams: { prompt: "select_account" },
+    });
+
+    if (result?.error) {
+      console.error("Authentication error:", result.error);
+      setErrorMessage(result.error);
+      return;
+    }
+
+    // For Google sign-in, we'll store the basic info immediately
+    // The session details will be available after the redirect
+    localStorage.setItem("loginMethod", "google");
+  } catch (err) {
+    console.error("Sign in error:", err);
+    setErrorMessage("Failed to sign in with Google");
+  }
+};
+
+// Update your session useEffect to handle Google sign-in
+useEffect(() => {
+  if (status === "authenticated" && session?.user) {
+    if (localStorage.getItem("loginMethod") === "google") {
+      // Save Google user details to localStorage
+      localStorage.setItem("userEmail", session.user.email || "");
+      localStorage.setItem("userName", session.user.name || "");
+    }
+    checkUserInDatabase(session.user.email);
+  }
+}, [status, session]);
   const toggleSignUp = () => {
     setIsSignUp(!isSignUp);
     setSubmitAttempted(false);
@@ -194,224 +282,6 @@ export default function Home() {
     setPassword(newPassword);
     checkPasswordStrength(newPassword);
   };
-  // return (
-  //   <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 flex flex-col items-center justify-center p-4">
-  //     {/* Navigation Bar */}
-  //     <div className="max-w-6xl mx-auto px-4 flex justify-between items-center">
-  //       {session && (
-  //         <button
-  //           onClick={logoutUser}
-  //           className="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-full transition-all duration-300 cursor-pointer"
-  //         >
-  //           Sign Out
-  //         </button>
-  //       )}
-  //     </div>
-
-  //     {/* Main Content Card */}
-  //     <div className="bg-white shadow-xl rounded-2xl overflow-hidden mt-16 max-w-md w-full transition-transform duration-300 hover:scale-102">
-  //       <div className="bg-indigo-500 p-6">
-  //         <h1 className="text-2xl font-bold text-white text-center">
-  //           Welcome back
-  //         </h1>
-  //       </div>
-
-  //       <div className="p-7">
-  //         <div className="space-y-6">
-  //           <p className="text-gray-600 text-center mb-6">
-  //             Access your personalized courses with secure authentication
-  //           </p>
-
-  //           {submitAttempted && errorMessage && (
-  //             <p className="text-red-500 text-center">{errorMessage}</p>
-  //           )}
-
-  //           {!isSignUp ? (
-  //             <>
-  //               <div className="relative flex flex-col gap-1">
-  //                 <label
-  //                   htmlFor="email"
-  //                   className="text-sm font-medium text-gray-700"
-  //                 >
-  //                   Email <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <input
-  //                   id="email"
-  //                   type="email"
-  //                   value={email}
-  //                   onChange={(e) => setEmail(e.target.value)}
-  //                   placeholder="example@gmail.com"
-  //                   className="w-full p-3 rounded-lg border border-gray-300 text-sm"
-  //                 />
-  //                 <div className="absolute right-3 top-12 transform -translate-y-1/2 text-gray-400">
-  //                   <FontAwesomeIcon icon={faEnvelope} />
-  //                 </div>
-  //               </div>
-
-  //               <div className="relative flex flex-col gap-1">
-  //                 <label
-  //                   htmlFor="password"
-  //                   className="text-sm font-medium text-gray-700"
-  //                 >
-  //                   Password <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <input
-  //                   id="password"
-  //                   type={showPassword ? "text" : "password"}
-  //                   value={password}
-  //                   onChange={handlePasswordChange}
-  //                   placeholder="Enter your password"
-  //                   className="w-full p-3 rounded-lg border border-gray-300 pr-12 text-sm"
-  //                 />
-  //                 <div
-  //                   className="absolute right-3 top-12 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-  //                   onClick={togglePasswordVisibility}
-  //                 >
-  //                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-  //                 </div>
-  //               </div>
-
-  //               <button
-  //                 onClick={handleSignIn}
-  //                 className="w-full mt-5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
-  //               >
-  //                 Log in
-  //               </button>
-  //             </>
-  //           ) : (
-  //             <>
-  //               <div className="relative flex flex-col gap-1">
-  //                 <label
-  //                   htmlFor="name"
-  //                   className="text-sm font-medium text-gray-700"
-  //                 >
-  //                   Full Name <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <input
-  //                   id="name"
-  //                   type="text"
-  //                   value={name}
-  //                   onChange={(e) => setName(e.target.value)}
-  //                   placeholder="Enter your full name"
-  //                   className="w-full p-3 rounded-lg border border-gray-300 text-sm"
-  //                 />
-  //                 <div className="absolute right-3 top-12 transform -translate-y-1/2 text-gray-400">
-  //                   <FontAwesomeIcon icon={faUser} />
-  //                 </div>
-  //               </div>
-  //               <div className="relative flex flex-col gap-1">
-  //                 <label
-  //                   htmlFor="email"
-  //                   className="text-sm font-medium text-gray-700"
-  //                 >
-  //                   Email <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <input
-  //                   id="email"
-  //                   type="email"
-  //                   value={email}
-  //                   onChange={(e) => setEmail(e.target.value)}
-  //                   placeholder="example@gmail.com"
-  //                   className="w-full p-3 rounded-lg border border-gray-300 text-sm"
-  //                 />
-  //                 <div className="absolute right-3 top-12 transform -translate-y-1/2 text-gray-400">
-  //                   <FontAwesomeIcon icon={faEnvelope} />
-  //                 </div>
-  //               </div>
-
-  //               <div className="relative flex flex-col gap-1">
-  //                 <label
-  //                   htmlFor="password"
-  //                   className="text-sm font-medium text-gray-700"
-  //                 >
-  //                   Password <span className="text-red-500">*</span>
-  //                 </label>
-  //                 <input
-  //                   id="password"
-  //                   type={showPassword ? "text" : "password"}
-  //                   value={password}
-  //                   onChange={handlePasswordChange}
-  //                   placeholder="Create password"
-  //                   className="w-full p-3 rounded-lg border border-gray-300 pr-12 text-sm"
-  //                 />
-  //                 <div
-  //                   className="absolute right-3 top-12 transform -translate-y-1/2 text-gray-400 cursor-pointer"
-  //                   onClick={togglePasswordVisibility}
-  //                 >
-  //                   <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
-  //                 </div>
-  //               </div>
-
-  //               <div className="flex items-center gap-2  ml-1">
-  //                 <div className="flex gap-1">
-  //                   <div
-  //                     className={`h-2 w-8 rounded-sm ${
-  //                       passwordStrength === "weak"
-  //                         ? "bg-red-500"
-  //                         : "bg-gray-300"
-  //                     }`}
-  //                   ></div>
-  //                   <div
-  //                     className={`h-2 w-8 rounded-sm ${
-  //                       passwordStrength === "medium"
-  //                         ? "bg-yellow-500"
-  //                         : "bg-gray-300"
-  //                     }`}
-  //                   ></div>
-  //                   <div
-  //                     className={`h-2 w-8 rounded-sm ${
-  //                       passwordStrength === "strong"
-  //                         ? "bg-green-500"
-  //                         : "bg-gray-300"
-  //                     }`}
-  //                   ></div>
-  //                 </div>
-  //                 <p className="text-sm text-gray-500">
-  //                   {passwordStrength === "weak"
-  //                     ? "Weak"
-  //                     : passwordStrength === "medium"
-  //                     ? "Medium"
-  //                     : "Strong"}
-  //                 </p>
-  //               </div>
-  //               <button
-  //                 onClick={handleSignUp}
-  //                 className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
-  //               >
-  //                 Sign Up
-  //               </button>
-  //             </>
-  //           )}
-
-  //           <div className="text-center ">or</div>
-
-  //           <button
-  //             onClick={handleGoogleSignIn}
-  //             className="w-full bg-white border border-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-gray-100 transition-all duration-300 flex items-center justify-center"
-  //           >
-  //             Continue with Google
-  //           </button>
-
-  //           <p className="text-center text-sm text-gray-600">
-  //             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-  //             <button
-  //               onClick={toggleSignUp}
-  //               className="text-indigo-600 hover:underline"
-  //             >
-  //               {isSignUp ? "Sign in" : "Sign up"}
-  //             </button>
-  //           </p>
-  //         </div>
-  //       </div>
-  //     </div>
-
-  //     {/* Footer */}
-  //     <footer className="mt-8 text-center text-gray-400 text-sm">
-  //       <p>© 2025 S-Tech. All rights reserved.</p>
-  //       <p className="mt-1">Trusted by organizations worldwide</p>
-  //     </footer>
-  //   </div>
-  // );
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
@@ -426,7 +296,7 @@ export default function Home() {
           </button>
         )} */}
       </nav>
-  
+
       {/* Main Content Card */}
       <div className="bg-white/90 backdrop-blur-sm shadow-2xl rounded-2xl overflow-hidden my-8 max-w-md w-full transition-transform duration-300 hover:scale-[1.01]">
         <div className="bg-gradient-to-r from-[#9F5F80] to-[#583D72] p-6">
@@ -434,19 +304,21 @@ export default function Home() {
             {isSignUp ? "Create Your Account" : "Welcome Back"}
           </h1>
         </div>
-  
+
         <div className="p-7">
           <div className="space-y-6">
             <p className="text-gray-600 text-center mb-6">
-              {isSignUp 
-                ? "Join us to access personalized courses" 
+              {isSignUp
+                ? "Join us to access personalized courses"
                 : "Access your personalized courses with secure authentication"}
             </p>
-  
+
             {submitAttempted && errorMessage && (
-              <p className="text-[#FF8474] text-center font-medium">{errorMessage}</p>
+              <p className="text-[#FF8474] text-center font-medium">
+                {errorMessage}
+              </p>
             )}
-  
+
             {!isSignUp ? (
               <>
                 <div className="relative flex flex-col gap-1">
@@ -468,7 +340,7 @@ export default function Home() {
                     <FontAwesomeIcon icon={faEnvelope} />
                   </div>
                 </div>
-  
+
                 <div className="relative flex flex-col gap-1">
                   <label
                     htmlFor="password"
@@ -491,7 +363,7 @@ export default function Home() {
                     <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                   </div>
                 </div>
-  
+
                 <button
                   onClick={handleSignIn}
                   className="w-full mt-5 bg-gradient-to-r from-[#9F5F80] to-[#583D72] hover:from-[#583D72] hover:to-[#9F5F80] text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-300"
@@ -539,7 +411,7 @@ export default function Home() {
                     <FontAwesomeIcon icon={faEnvelope} />
                   </div>
                 </div>
-  
+
                 <div className="relative flex flex-col gap-1">
                   <label
                     htmlFor="password"
@@ -562,7 +434,7 @@ export default function Home() {
                     <FontAwesomeIcon icon={showPassword ? faEyeSlash : faEye} />
                   </div>
                 </div>
-  
+
                 <div className="flex items-center gap-2 ml-1">
                   <div className="flex gap-1">
                     <div
@@ -603,25 +475,25 @@ export default function Home() {
                 </button>
               </>
             )}
-  
+
             <div className="flex items-center justify-center gap-4">
               <div className="h-px bg-gray-300 flex-1"></div>
               <span className="text-gray-500 text-sm">or</span>
               <div className="h-px bg-gray-300 flex-1"></div>
             </div>
-  
+
             <button
               onClick={handleGoogleSignIn}
               className="w-full bg-white border border-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg shadow-md hover:bg-gray-50 transition-all duration-300 flex items-center justify-center gap-2"
             >
-              <img 
-                src="https://www.google.com/favicon.ico" 
-                alt="Google" 
+              <img
+                src="https://www.google.com/favicon.ico"
+                alt="Google"
                 className="w-5 h-5"
               />
               Continue with Google
             </button>
-  
+
             <p className="text-center text-sm text-[#583D72]">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
               <button
@@ -634,7 +506,7 @@ export default function Home() {
           </div>
         </div>
       </div>
-  
+
       {/* Footer */}
       <footer className="mt-8 text-center text-[#583D72]/80 text-sm">
         <p>© 2025 S-Tech. All rights reserved.</p>

@@ -23,7 +23,10 @@ import {
   faInfoCircle,
   faCheckCircle,
   faCircleCheck,
+  faRightLong,
+  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
+import Navbar from "../navbar/page";
 // import dynamic from "next/dynamic";
 
 // const CreateQuiz = dynamic(() => import("../createQuiz/page"), { ssr: false });
@@ -70,12 +73,15 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
   const [currentQuestionIdInternal, setCurrentQuestionIdInternal] = useState(
     currentQuestionId || null
   );
+  const [selectedQuestionId, setSelectedQuestionId] = useState(null);
+
   const [searchTerm, setSearchTerm] = useState("");
 
   const [showModal, setShowModal] = useState(false);
   const [showModalSubmit, setShowModalSubmit] = useState(false);
   const [showModalDelete, setShowModalDelete] = useState(false);
   const [quiz, setQuiz] = useState(null);
+  const [questionName, setQuestionName] = useState("");
   const [selectedQuestionInternal, setSelectedQuestionInternal] = useState(
     selectedQuestion || null
   );
@@ -365,7 +371,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
       question.question.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [questionsPreview, searchTerm]);
-  const handleDelete = async (id) => {
+  const handleDelete = async (id, question) => {
     const { error } = await supabase.from("Question").delete().eq("id", id);
     if (error) {
       console.error("Delete error:", error.message);
@@ -380,26 +386,21 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
 
   return (
     <>
-      <div className="ml-2">
-        <FontAwesomeIcon
-          icon={faHome}
-          onClick={handleBackToQuizList}
-          className="text-xl mb-4 fixed  text-white   z-10 top-2 cursor-pointer  flex items-center justify-center px-4 py-2.5 rounded-lg transition-all bg-[#583D72]  border border-[#9F5F80] hover:bg-[#4A3265]"
-        />
-      </div>
-      <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] -z-10">
+      <Navbar />
+
+      <div className="flex flex-col md:flex-row min-h-screen bg-[#f8f9fa] -z-10 mt-16">
         {/* Sidebar - Fixed width and sticky */}
-        <div className="w-64 bg-[#583D72] text-white p-2 shadow-lg md:fixed md:h-screen md:overflow-y-auto">
+        <div className="w-64 bg-[#583D72] text-white p-2 shadow-lg md:fixed  h-full">
           <div className="flex flex-col h-full">
             {quiz ? (
               <div className=" flex items-center justify-center   ">
-                <h1 className="w-50 ml-15 flex items-center justify-center px-4 py-2 rounded-lg transition-all bg-[#583D72] text-white  border border-[#9F5F80]">
+                <h1 className="  flex items-center justify-center  py-1 rounded-lg transition-all text-xl  text-white  ">
                   {quiz.name}
                 </h1>
               </div>
             ) : (
               <div className="mb-1 flex items-center justify-center   ">
-                <h1 className="w-50 ml-15 flex items-center justify-center px-4 py-2 rounded-lg transition-all bg-[#583D72] text-white  border border-[#9F5F80]">
+                <h1 className="flex items-center justify-center  py-1 text-xl  rounded-lg transition-all  text-white">
                   Create New Quiz
                 </h1>
               </div>
@@ -413,7 +414,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
             </button>
 
             {quiz ? (
-              <h3 className="text-[#FFC996] font-medium mb-2 text-center mt-5">
+              <h3 className="text-[#FFC996] font-medium mb-1  text-center mt-2">
                 {questions.length === 0
                   ? "No questions added yet"
                   : `${questions.length} Questions added`}{" "}
@@ -421,7 +422,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
             ) : (
               <h3 className="text-[#FFC996] font-medium mb-2"></h3>
             )}
-            <div className="flex-1 overflow-y-auto mb-4 max-h-75 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto mb-2 max-h-64 custom-scrollbar">
               {fetchingQuestions ? (
                 <div className="flex justify-center py-3 ">
                   <div className="animate-spin rounded-full h-5 w-5 border-2 border-[#FF8474] border-t-transparent"></div>
@@ -446,7 +447,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
             </div>
 
             {/* Action Buttons */}
-            <div className="space-y-3  absolute bottom-3  w-60 border-t border-[#9F5F80] pt-4">
+            <div className="space-y-3   w-60 border-t border-[#9F5F80] pt-3">
               <button
                 onClick={handleAddQuestion}
                 className="w-full cursor-pointer flex items-center justify-center px-4 py-3 rounded-lg transition-all bg-[#FF8474] text-white hover:bg-[#FF6B5B]"
@@ -484,7 +485,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                   </h2>
 
                   {/* Middle: Search */}
-                  <div className="flex-1 max-w-md">
+                  {/* <div className="flex-1 max-w-md">
                     <input
                       type="text"
                       value={searchTerm}
@@ -492,7 +493,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                       placeholder="Search question..."
                       className="w-full p-3 border border-[#FFC996] rounded-lg focus:ring-2 focus:ring-[#FF8474] placeholder:text-gray-400"
                     />
-                  </div>
+                  </div> */}
 
                   {/* Right: Question Count & Total Points */}
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
@@ -528,7 +529,11 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
                         {question.points} Marks
                       </span> */}
                       <button
-                        onClick={() => setShowModalDelete(true)}
+                        onClick={() => {
+                          setQuestionName(question);
+                          setSelectedQuestionId(question.id);
+                          setShowModalDelete(true);
+                        }}
                         className=" font-semibold text-[#FF8474]  bg-[#FFF5F0] rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-200 hover:text-red-400 cursor-pointer"
                         title="Delete this question"
                       >
@@ -673,7 +678,7 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
           )}
 
           {showList && !showPreview && (
-            <div className="max-w-3xl mt-12 mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+            <div className="max-w-3xl mt-7 mx-auto bg-white rounded-xl shadow-md overflow-hidden">
               <div className="p-8">
                 <div className="flex items-start justify-between mb-8">
                   <div>
@@ -808,83 +813,101 @@ function QuizContent({ quizId, selectedQuestion, currentQuestionId }) {
               </div>
             </div>
           )}
+
           {showModal && (
-            <div className="fixed inset-0 z-50 bg-opacity-30 backdrop-blur-sm flex items-center justify-center">
-              <div className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
-                <h2 className="text-lg font-semibold mb-4 text-center">
-                  Quiz Already Submitted !
-                </h2>
-                <p className="mb-4 text-center">
-                  Do you want to unsubmit{" "}
-                  <span className="text-[#9F5F80] font-bold">
-                    {" "}
-                    {quiz.name}{" "}
-                  </span>
-                  ?
-                </p>
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={handleUnsubmit}
-                    className="bg-[#9F5F80] text-white px-5 py-2 rounded hover:bg-[#8E4E75]"
-                  >
-                    OK
-                  </button>
-                  <button
-                    onClick={() => setShowModal(false)}
-                    className="bg-gray-300 px-5 py-2 rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-[#3A2258] rounded-xl shadow-2xl border border-[#4A2D73] max-w-md w-full p-6">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[#FF8474]/10 mb-4">
+                    <FontAwesomeIcon icon={faInfo} className="text-[#FF8474]" />
+                  </div>
+                  {/* <h3 className="text-lg font-medium mb-2">{quiz.name}</h3> */}
+                  <p className="text-white mb-6">Quiz Already Submitted !</p>
+
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={() => setShowModal(false)}
+                      className="px-6 py-2 border border-[#4A2D73] text-[#D1C4E9] rounded-lg hover:bg-[#4A2D73] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleUnsubmit}
+                      className="px-6 py-2 bg-[#FF8474] text-white rounded-lg hover:bg-[#E67363] transition-colors"
+                    >
+                      Unsubmit
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           )}
           {showModalSubmit && (
-            <div className="fixed inset-0 z-50 bg-opacity-30 backdrop-blur-sm flex items-center justify-center">
-              <div className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
-                <h2 className="text-lg  mb-4 text-center">
-                  <span className="text-[#9F5F80] font-bold">
-                    {" "}
-                    {quiz.name}{" "}
-                  </span>{" "}
-                  Submitted Successfully!
-                </h2>
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-[#3A2258] rounded-xl shadow-2xl border border-[#4A2D73] max-w-md w-full p-6">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[#FF8474]/10 mb-4">
+                    <FontAwesomeIcon
+                      icon={faCheck}
+                      className="text-[#FF8474]"
+                    />
+                  </div>
+                  <p className="text-white mb-6">
+                    Quiz submitted successfully.
+                  </p>
 
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={() => setShowModalSubmit(false)}
-                    className="bg-[#9F5F80] px-5 py-2 rounded hover:bg-[#8E4E75] text-white"
-                  >
-                    Ok
-                  </button>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={() => setShowModalSubmit(false)}
+                      className="px-6 py-2 bg-[#FF8474] text-white rounded-lg hover:bg-[#E67363] transition-colors"
+                    >
+                      Ok
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           )}
+
           {showModalDelete && (
-            <div className="fixed inset-0 z-50 bg-opacity-30 backdrop-blur-sm flex items-center justify-center">
-              <div className="bg-white p-6 rounded-lg shadow-md max-w-sm w-full">
-                <h2 className="text-lg  mb-4 text-center">
-                  Are you sure you want to delete this Question ?
-                </h2>
+            <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+              <div className="bg-[#3A2258] rounded-xl shadow-2xl border border-[#4A2D73] max-w-md w-full p-6">
+                <div className="text-center">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-[#FF8474]/10 mb-4">
+                    <FontAwesomeIcon
+                      icon={faTrash}
+                      className="text-[#FF8474]"
+                    />
+                  </div>
+                  {/* <h3 className="text-lg font-medium mb-2">
+                          Delete {questionName?.question}?
+                        </h3> */}
+                  <p className="text-white mb-6">
+                    Are you sure you want to delete this Question ?
+                  </p>
 
-                <div className="flex justify-center gap-4">
-                  <button
-                    onClick={() => handleDelete(question.id)}
-                    className="bg-[#9F5F80] px-5 py-2 rounded hover:bg-[#8E4E75] text-white"
-                  >
-                    Ok
-                  </button>
-                  <button
-                    onClick={() => setShowModalDelete(false)}
-                    className="bg-gray-300 px-5 py-2 rounded hover:bg-gray-400"
-                  >
-                    Cancel
-                  </button>
+                  <div className="flex justify-center gap-4">
+                    <button
+                      onClick={() => setShowModalDelete(false)}
+                      className="px-6 py-2 border border-[#4A2D73] text-[#D1C4E9] rounded-lg hover:bg-[#4A2D73] transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowModalDelete(false);
+                        handleDelete(selectedQuestionId);
+                      }}
+                      className="px-6 py-2 bg-[#FF8474] text-white rounded-lg hover:bg-[#E67363] transition-colors"
+                    >
+                      Delete Quiz
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           )}
+
           {showAddQuestion && (
             <div className="bg-white overflow-hidden">
               <div className="pt-5">
